@@ -1,45 +1,53 @@
-use std::{net::TcpListener, io::{Write, Read}};
+use tokio::{net::TcpListener, io::{AsyncReadExt, AsyncWriteExt}};
 
-fn main() {
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>>{
 
-    let listener = TcpListener::bind("localhost:4221").unwrap();
+    let addr = "localhost:4221";
+
+    let listener = TcpListener::bind(&addr).await?;
     const GET: &str = "GET";
     const ECHO: &str = "/echo/";
     const USER_AGENT: &str = "/user-agent";
     const RESPONSE_OK: &[u8; 19] = b"HTTP/1.1 200 OK\r\n\r\n";
     const RESPONSE_NOT_FOUND: &[u8; 26] = b"HTTP/1.1 404 NOT FOUND\r\n\r\n";
 
-    for stream_result in listener.incoming() {
-        match stream_result {
-            Ok(mut stream) => {
-                let mut data = [0u8; 4096];
-                stream.read(&mut data).unwrap();
-                let request = String::from_utf8_lossy(&data);
-                let lines: Vec<&str>= request.lines().collect();
 
-                let request_type: Vec<&str> = lines[0].split(' ').collect();
+    loop {
+        let (mut socket, _)= listener.accept().await?;
+        tokio::spawn(async move {
+            let mut data = [0u8; 4096];
+            loop {
+                let bytes_read = socket
+                    .read(&mut data)
+                    .await
+                    .expect("failed to read data from socket");
+
+                if bytes_read == 0 {
+                    return ;
+                }
+                let request = String::from_utf8_lossy(&data);
+                let lines: Vec<&str> = request.lines().collect();
+
+                let request_type: Vec<&str> = lines[0].split(" ").collect();
 
                 if request_type[0] == GET && request_type[1] == "/" {
-                    let _ = stream.write_all(RESPONSE_OK);
+                    let _ = socket.write(RESPONSE_OK);
                 } else if request_type[0] == GET && request_type[1].starts_with(ECHO) {
                     let word = &request_type[1][6..];
                     let len = word.len();
                     let s = format!("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: {}\r\n\r\n{}", len, word);
-                    let _ = stream.write_all(s.as_bytes());
+                    let _ = socket.write(s.as_bytes());
                 } else if request_type[0] == GET && request_type[1] == USER_AGENT {
                     let user_agent = &lines[2][12..];
                     let len = user_agent.len();
                     let s = format!("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: {}\r\n\r\n{}", len, user_agent);
-                    let _ = stream.write_all(s.as_bytes());
+                    let _ = socket.write(s.as_bytes());
                 }
                 else {
-                    let _ = stream.write_all(RESPONSE_NOT_FOUND);
+                    let _ = socket.write(RESPONSE_NOT_FOUND);
                 }
-
-            } 
-            Err(e) => {
-                println!("error : {}", e);
             }
-        }
+        });
     }
 }
