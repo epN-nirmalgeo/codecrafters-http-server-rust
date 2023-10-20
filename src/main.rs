@@ -16,20 +16,18 @@ fn main() {
                 stream.read(&mut data).unwrap();
                 let request = String::from_utf8_lossy(&data);
                 let lines: Vec<&str>= request.lines().collect();
-                for line in &lines {
-                    println!("line --> {line}");
-                }
-                let line_token: Vec<&str> = lines[0].split(' ').collect();
 
-                if line_token[0] == GET && line_token[1] == "/" {
+                let request_type: Vec<&str> = lines[0].split(' ').collect();
+
+                if request_type[0] == GET && request_type[1] == "/" {
                     let _ = stream.write_all(RESPONSE_OK);
-                } else if line_token[0] == GET && line_token[1].starts_with(ECHO) {
-                    let word = &line_token[1][6..];
+                } else if request_type[0] == GET && request_type[1].starts_with(ECHO) {
+                    let word = &request_type[1][6..];
                     let len = word.len();
                     let s = format!("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: {}\r\n\r\n{}", len, word);
                     let _ = stream.write_all(s.as_bytes());
-                } else if line_token[0] == GET && line_token[1] == USER_AGENT {
-                    let user_agent = &line_token[4][..];
+                } else if request_type[0] == GET && request_type[1] == USER_AGENT {
+                    let user_agent = &lines[2][13..];
                     let len = user_agent.len();
                     let s = format!("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: {}\r\n\r\n{}", len, user_agent);
                     let _ = stream.write_all(s.as_bytes());
