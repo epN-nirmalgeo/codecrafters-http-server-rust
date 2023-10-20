@@ -22,7 +22,7 @@ fn main() {
                 } else if line_token[0] == GET && line_token[1].starts_with(ECHO) {
                     let word = &line_token[1][6..];
                     let len = word.len();
-                    let s = format!("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: {}\r\n\r\n{}\r\n", len, word);
+                    let s = format!("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: {}\r\n\r\n{}", len, word);
                     let _ = stream.write_all(s.as_bytes());
                 } else {
                     let _ = stream.write_all(RESPONSE_NOT_FOUND);
