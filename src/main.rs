@@ -16,6 +16,7 @@ fn main() {
                 stream.read(&mut data).unwrap();
                 let request = String::from_utf8_lossy(&data);
                 let lines: Vec<&str>= request.lines().collect();
+                println!("{}", lines[0]);
                 let line_token: Vec<&str> = lines[0].split(' ').collect();
 
                 if line_token[0] == GET && line_token[1] == "/" {
