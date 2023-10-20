@@ -26,7 +26,7 @@ fn main() {
                     let s = format!("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: {}\r\n\r\n{}", len, word);
                     let _ = stream.write_all(s.as_bytes());
                 } else if line_token[0] == GET && line_token[1] == USER_AGENT {
-                    let user_agent = &line_token[3][12..];
+                    let user_agent = &line_token[4][..];
                     let len = user_agent.len();
                     let s = format!("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: {}\r\n\r\n{}", len, user_agent);
                     let _ = stream.write_all(s.as_bytes());
