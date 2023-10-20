@@ -5,6 +5,7 @@ fn main() {
     let listener = TcpListener::bind("localhost:4221").unwrap();
     const GET: &str = "GET";
     const ECHO: &str = "/echo/";
+    const USER_AGENT: &str = "/user-agent";
     const RESPONSE_OK: &[u8; 19] = b"HTTP/1.1 200 OK\r\n\r\n";
     const RESPONSE_NOT_FOUND: &[u8; 26] = b"HTTP/1.1 404 NOT FOUND\r\n\r\n";
 
@@ -24,7 +25,13 @@ fn main() {
                     let len = word.len();
                     let s = format!("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: {}\r\n\r\n{}", len, word);
                     let _ = stream.write_all(s.as_bytes());
-                } else {
+                } else if line_token[0] == GET && line_token[1] == USER_AGENT {
+                    let user_agent = &line_token[3][12..];
+                    let len = user_agent.len();
+                    let s = format!("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: {}\r\n\r\n{}", len, user_agent);
+                    let _ = stream.write_all(s.as_bytes());
+                }
+                else {
                     let _ = stream.write_all(RESPONSE_NOT_FOUND);
                 }
 
