@@ -17,36 +17,34 @@ async fn main() -> Result<(), Box<dyn std::error::Error>>{
         let (mut socket, _)= listener.accept().await?;
         tokio::spawn(async move {
             let mut data = [0u8; 4096];
-            loop {
-                let bytes_read = socket
-                    .read(&mut data)
-                    .await
-                    .expect("failed to read data from socket");
+            let bytes_read = socket
+                .read(&mut data)
+                .await
+                .expect("failed to read data from socket");
 
-                if bytes_read == 0 {
-                    return ;
-                }
-                let request = String::from_utf8_lossy(&data);
-                let lines: Vec<&str> = request.lines().collect();
+            if bytes_read == 0 {
+                return ;
+            }
+            let request = String::from_utf8_lossy(&data);
+            let lines: Vec<&str> = request.lines().collect();
 
-                let request_type: Vec<&str> = lines[0].split(" ").collect();
+            let request_type: Vec<&str> = lines[0].split(" ").collect();
 
-                if request_type[0] == GET && request_type[1] == "/" {
-                    let _ = socket.write(RESPONSE_OK);
-                } else if request_type[0] == GET && request_type[1].starts_with(ECHO) {
-                    let word = &request_type[1][6..];
-                    let len = word.len();
-                    let s = format!("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: {}\r\n\r\n{}", len, word);
-                    let _ = socket.write(s.as_bytes());
-                } else if request_type[0] == GET && request_type[1] == USER_AGENT {
-                    let user_agent = &lines[2][12..];
-                    let len = user_agent.len();
-                    let s = format!("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: {}\r\n\r\n{}", len, user_agent);
-                    let _ = socket.write(s.as_bytes());
-                }
-                else {
-                    let _ = socket.write(RESPONSE_NOT_FOUND);
-                }
+            if request_type[0] == GET && request_type[1] == "/" {
+                let _ = socket.write(RESPONSE_OK);
+            } else if request_type[0] == GET && request_type[1].starts_with(ECHO) {
+                let word = &request_type[1][6..];
+                let len = word.len();
+                let s = format!("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: {}\r\n\r\n{}", len, word);
+                let _ = socket.write(s.as_bytes());
+            } else if request_type[0] == GET && request_type[1] == USER_AGENT {
+                let user_agent = &lines[2][12..];
+                let len = user_agent.len();
+                let s = format!("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: {}\r\n\r\n{}", len, user_agent);
+                let _ = socket.write(s.as_bytes());
+            }
+            else {
+                let _ = socket.write(RESPONSE_NOT_FOUND);
             }
         });
     }
