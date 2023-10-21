@@ -3,7 +3,7 @@ use tokio::{net::TcpListener, io::{AsyncReadExt, AsyncWriteExt}};
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>>{
 
-    let addr = "localhost:4221";
+    let addr = "127.0.0.1:4221";
 
     let listener = TcpListener::bind(&addr).await?;
     const GET: &str = "GET";
@@ -15,7 +15,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>>{
 
     loop {
         let (mut socket, _)= listener.accept().await?;
+        println!("socket connected");
         tokio::spawn(async move {
+            println!("task spawned");
             let mut data = [0u8; 4096];
             let bytes_read = socket
                 .read(&mut data)
@@ -27,6 +29,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>>{
             }
             let request = String::from_utf8_lossy(&data);
             let lines: Vec<&str> = request.lines().collect();
+
+            println!("{:?}", lines);
 
             let request_type: Vec<&str> = lines[0].split(" ").collect();
 
