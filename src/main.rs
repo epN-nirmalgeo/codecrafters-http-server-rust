@@ -5,7 +5,10 @@ use std::{env, sync::Arc};
 async fn main() -> Result<(), Box<dyn std::error::Error>>{
 
     let args: Vec<String> = env::args().collect();
-    let directory =Arc::new(args[2].clone());
+    let mut directory = Arc::new("".to_owned());
+    if args.len() >= 3 {
+        directory =Arc::new(args[2].clone());   
+    }
     let addr = "127.0.0.1:4221";
 
     let listener = TcpListener::bind(&addr).await?;
