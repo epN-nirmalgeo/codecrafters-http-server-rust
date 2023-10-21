@@ -1,13 +1,17 @@
-use tokio::{net::TcpListener, io::{AsyncReadExt, AsyncWriteExt}};
+use tokio::{net::TcpListener, io::{AsyncReadExt, AsyncWriteExt}, fs::File};
+use std::{env, sync::Arc};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>>{
 
+    let args: Vec<String> = env::args().collect();
+    let directory =Arc::new(args[2].clone());
     let addr = "127.0.0.1:4221";
 
     let listener = TcpListener::bind(&addr).await?;
     const GET: &str = "GET";
     const ECHO: &str = "/echo/";
+    const FILE: &str = "/files/";
     const USER_AGENT: &str = "/user-agent";
     const RESPONSE_OK: &[u8; 19] = b"HTTP/1.1 200 OK\r\n\r\n";
     const RESPONSE_NOT_FOUND: &[u8; 26] = b"HTTP/1.1 404 NOT FOUND\r\n\r\n";
@@ -15,9 +19,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>>{
 
     loop {
         let (mut socket, _)= listener.accept().await?;
-        println!("socket connected");
+        let dir = Arc::clone(&directory);
         tokio::spawn(async move {
-            println!("task spawned");
             let mut data = [0u8; 4096];
             let bytes_read = socket
                 .read(&mut data)
@@ -44,8 +47,24 @@ async fn main() -> Result<(), Box<dyn std::error::Error>>{
                 let len = user_agent.len();
                 let s = format!("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: {}\r\n\r\n{}", len, user_agent);
                 let _ = socket.write(s.as_bytes()).await;
-            }
-            else {
+            } else if request_type[0] == GET && request_type[1].starts_with(FILE) {
+                let mut file_name = dir.clone().to_string();
+                file_name.push_str(&request_type[1][7..]);
+                match File::open(file_name).await {
+                    Ok(mut file) => {
+                        let mut contents = vec![];
+                        file.read_to_end(&mut contents).await.unwrap();
+                        let s = format!("HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\nContent-Length: {}\r\n\r\n", contents.len());
+                        let _= socket.write(s.as_bytes()).await;
+                        let _ = socket.write_all(&contents).await;
+                    }
+                    Err(_) => {
+                        let _ = socket.write(RESPONSE_NOT_FOUND);
+                    }
+                }
+               
+
+            } else {
                 let _ = socket.write(RESPONSE_NOT_FOUND).await;
             }
         });
