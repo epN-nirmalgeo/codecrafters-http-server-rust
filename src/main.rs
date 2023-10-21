@@ -62,7 +62,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>>{
                         let _ = socket.write_all(&contents).await;
                     }
                     Err(_) => {
-                        let _ = socket.write(RESPONSE_NOT_FOUND);
+                        let _ = socket.write(RESPONSE_NOT_FOUND).await;
                     }
                 }
                
