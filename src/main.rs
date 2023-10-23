@@ -72,7 +72,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>>{
                 file_name.push_str(&request_type[1][7..]);
                 match File::create(file_name).await {
                     Ok(mut file) => {
-                        if let Ok(_) = file.write(lines[3].as_bytes()).await {
+                        if let Ok(_) = file.write(lines[6].as_bytes()).await {
                             let _ = socket.write(RESPONSE_POST_OK).await;
                         } else {
                             let _ = socket.write(RESPONSE_NOT_FOUND).await;
