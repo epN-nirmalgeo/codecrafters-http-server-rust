@@ -68,13 +68,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>>{
                     }
                 }
             } else if request_type[0] == POST && request_type[1].starts_with(FILE) {
+                let content_length: usize = lines[3][17..].parse::<usize>().unwrap();
                 let mut file_name = dir.clone().to_string();
                 file_name.push_str(&request_type[1][7..]);
+
+
                 match File::create(file_name).await {
                     Ok(mut file) => {
-                        let mut content = lines[6].to_string();
-                        content.pop();
-                        content.pop();
+                        let content = lines[6][..content_length].to_string();
+                        println!("{content}");
                         if let Ok(_) = file.write(content.as_bytes()).await {
                             let _ = socket.write(RESPONSE_POST_OK).await;
                         } else {
