@@ -70,13 +70,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>>{
             } else if request_type[0] == POST && request_type[1].starts_with(FILE) {
                 let mut file_name = dir.clone().to_string();
                 file_name.push_str(&request_type[1][7..]);
-
+                let content_length = lines[3][16..].to_string().parse::<usize>().unwrap();
+                println!("content length {}", content_length);
 
                 match File::create(file_name).await {
                     Ok(mut file) => {
-                        let content = lines[6].to_string();
+                        let content = lines[6][..=content_length].to_string();
                         println!(" content : {content} {}", content.len());
-                        if let Ok(_) = file.write_all(content.as_bytes()).await {
+                        if let Ok(_) = file.write(content.as_bytes()).await {
                             let _ = socket.write(RESPONSE_POST_OK).await;
                         } else {
                             let _ = socket.write(RESPONSE_NOT_FOUND).await;
