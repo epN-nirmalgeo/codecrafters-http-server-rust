@@ -13,10 +13,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>>{
 
     let listener = TcpListener::bind(&addr).await?;
     const GET: &str = "GET";
+    const POST: &str = "POST";
     const ECHO: &str = "/echo/";
     const FILE: &str = "/files/";
     const USER_AGENT: &str = "/user-agent";
     const RESPONSE_OK: &[u8; 19] = b"HTTP/1.1 200 OK\r\n\r\n";
+    const RESPONSE_POST_OK: &[u8; 19] = b"HTTP/1.1 201 OK\r\n\r\n";
     const RESPONSE_NOT_FOUND: &[u8; 26] = b"HTTP/1.1 404 NOT FOUND\r\n\r\n";
 
 
@@ -65,8 +67,22 @@ async fn main() -> Result<(), Box<dyn std::error::Error>>{
                         let _ = socket.write(RESPONSE_NOT_FOUND).await;
                     }
                 }
-               
-
+            } else if request_type[0] == POST && request_type[1].starts_with(FILE) {
+                let mut file_name = dir.clone().to_string();
+                file_name.push_str(&request_type[1][7..]);
+                match File::create(file_name).await {
+                    Ok(mut file) => {
+                        if let Ok(_) = file.write(lines[3].as_bytes()).await {
+                            let _ = socket.write(RESPONSE_POST_OK).await;
+                        } else {
+                            let _ = socket.write(RESPONSE_NOT_FOUND).await;
+                        }
+                    }
+                    Err(_) => {
+                        let _ = socket.write(RESPONSE_NOT_FOUND).await;
+                    }
+                }
+                
             } else {
                 let _ = socket.write(RESPONSE_NOT_FOUND).await;
             }
