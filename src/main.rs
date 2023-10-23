@@ -75,7 +75,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>>{
 
                 match File::create(file_name).await {
                     Ok(mut file) => {
-                        let content = lines[6][..=content_length].to_string();
+                        let content = lines[6][..content_length].to_string();
                         println!(" content : {content} {}", content.len());
                         if let Ok(_) = file.write(content.as_bytes()).await {
                             let _ = socket.write(RESPONSE_POST_OK).await;
